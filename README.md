@@ -1,1 +1,1 @@
-# img-search.vim
+# vim9-img-search

@@ -40,7 +40,7 @@ export def ShowImage(idx: number)
         return
     endif
 
-    const sixel = system(printf("curl -s '%s' | convert - -resize '768x432>' jpg:- | img2sixel", url))
+    const sixel = printf("curl -s '%s' | convert - -resize '768x432>' jpg:- | img2sixel", url)->system()
     OpenWindow()
     echoraw(printf("\x1b[%d;%dH%s", window.row, window.col, sixel))
 enddef
@@ -83,11 +83,12 @@ def OpenWindow()
 
     const winid = win_getid()
     const pos = screenpos(winid, 1, 1)
+
+    silent! wincmd p
+
     window = {
         id: winid,
         row: pos.row,
         col: pos.col,
     }
-
-    silent! wincmd p
 enddef
