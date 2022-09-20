@@ -7,7 +7,7 @@ var window: dict<number>
 
 export def SearchImage(mode: string)
     if !exists('g:img_search_api_key') || !exists('g:img_search_engine_id')
-        echoerr 'Both g:img_search_api_key and g:img_search_engine_id are required'
+        echo 'Both g:img_search_api_key and g:img_search_engine_id are required'
         return
     endif
 
@@ -20,14 +20,14 @@ export def SearchImage(mode: string)
         echoerr 'Invalid mode'
     endif
 
-    if searchword == ''
+    if empty(searchword)
         return
     endif
 
     const urls = GetImageUrls(searchword)
     SaveUrlFile(urls)
 
-    ShowImage(1)
+    ShowImage(0)
 enddef
 
 export def ShowImage(idx: number)
@@ -36,11 +36,17 @@ export def ShowImage(idx: number)
     endif
 
     const url = readfile(URL_FILE)->get(idx, '')
-    if url == ''
+    if empty(url)
         return
     endif
 
-    const sixel = printf("curl -s '%s' | convert - -resize '768x432>' jpg:- | img2sixel", url)->system()
+    const sixel = printf("set -o pipefail; curl -s '%s' | convert - -resize '768x432>' jpg:- | img2sixel", url)
+        ->system()
+    if v:shell_error
+        echo 'Failed to display image'
+        return
+    endif
+
     OpenWindow()
     echoraw(printf("\x1b[%d;%dH%s", window.row, window.col, sixel))
 enddef
@@ -53,7 +59,7 @@ enddef
 def GetSelectedWord(): string
     const REG = '"'
     execute 'normal! "' .. REG .. 'y'
-    return getreg(REG)->trim(" \t")
+    return getreg(REG)->trim(" \t")->substitute('[\r\n]\+', ' ', 'g')
 enddef
 
 def GetImageUrls(query: string): list<string>
@@ -62,7 +68,9 @@ def GetImageUrls(query: string): list<string>
 
     try
         final res: dict<any> = printf("curl -s '%s'", url)->system()->json_decode()
-        return res.items->map((key, item) => item.link)
+        return res.items
+            ->map((_, item) => item.link)
+            ->filter((_, link) => link->tolower()->match('\.\(png\|jpg\|jpeg\)$') >= 0)
     catch
         echoerr 'Error: ' .. v:exception
     endtry
@@ -79,12 +87,13 @@ def SaveUrlFile(urls: list<string>)
 enddef
 
 def OpenWindow()
-    execute "new +set\\ nonumber"
+    silent new +set\ nonumber _IMG_SEARCH_
 
     const winid = win_getid()
     const pos = screenpos(winid, 1, 1)
 
     silent! wincmd p
+    redraw
 
     window = {
         id: winid,
