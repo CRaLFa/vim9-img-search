@@ -5,7 +5,7 @@ const URL_FILE = TMP_DIR .. '/url.txt'
 const REG_TMP = '"'
 
 var window: dict<number>
-var idx = 0
+var imgidx = 1
 
 export def SearchImage(mode: string)
     if !exists('g:img_search_api_key') || !exists('g:img_search_engine_id')
@@ -26,32 +26,32 @@ export def SearchImage(mode: string)
         return
     endif
 
-    const urls = GetImageUrls(searchword)
-    SaveUrlFile(urls)
+    final urls = GetImageUrls(searchword)
+    SaveUrlFile(searchword, urls)
 
-    idx = 0
+    imgidx = 1
     ShowImage()
 enddef
 
-export def ShowNextImage()
-    if idx > 9
+export def ShowPrevImage()
+    if imgidx <= 1
         echo 'No image'
         return
     endif
 
-    idx += 1
+    imgidx -= 1
 
     ClearImage()
     ShowImage()
 enddef
 
-export def ShowPrevImage()
-    if idx <= 0
+export def ShowNextImage()
+    if imgidx > 10
         echo 'No image'
         return
     endif
 
-    idx -= 1
+    imgidx += 1
 
     ClearImage()
     ShowImage()
@@ -64,6 +64,7 @@ export def ClearImage()
 
     echoraw(printf("\x1b[%d;%dH\x1b[J", window.row, window.col))
     win_execute(window.id, 'close')
+    redraw
 
     window = {}
 enddef
@@ -73,7 +74,9 @@ def ShowImage()
         return
     endif
 
-    const url = readfile(URL_FILE)->get(idx, '')
+    const urls = readfile(URL_FILE)
+    const url = urls->get(imgidx, '')
+
     if empty(url)
         echo 'No image'
         return
@@ -81,7 +84,7 @@ def ShowImage()
 
     setreg(REG_TMP, url)
 
-    const sixelfile = printf('%s/%d.sixel', TMP_DIR, idx)
+    const sixelfile = printf('%s/%d.sixel', TMP_DIR, imgidx)
     var sixel: string
 
     if filereadable(sixelfile)
@@ -100,7 +103,9 @@ def ShowImage()
         writefile([sixel], sixelfile)
     endif
 
-    window = OpenWindow()
+    const winname = printf('%s (%d／%d)', urls->get(0, '')->trim(), imgidx, urls->len() - 1)
+    window = OpenWindow(winname)
+
     echoraw(printf("\x1b[%d;%dH%s", window.row, window.col, sixel))
 enddef
 
@@ -126,18 +131,19 @@ def GetImageUrls(query: string): list<string>
     return []
 enddef
 
-def SaveUrlFile(urls: list<string>)
+def SaveUrlFile(searchword: string, urls: list<string>)
     if !isdirectory(TMP_DIR)
         mkdir(TMP_DIR, 'p')
     endif
 
     glob(TMP_DIR .. '/*.sixel')->split("\n")->map('delete(v:val)')
 
+    urls->insert(searchword)
     writefile(urls, URL_FILE)
 enddef
 
-def OpenWindow(): dict<number>
-    silent new +set\ nonumber _IMG_SEARCH_
+def OpenWindow(winname: string): dict<number>
+    execute 'silent new +set\ nonumber ' .. winname
 
     const winid = win_getid()
     const pos = screenpos(winid, 1, 1)

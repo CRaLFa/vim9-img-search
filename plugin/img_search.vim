@@ -13,8 +13,8 @@ g:loaded_img_search = true
 import autoload 'img_search.vim' as is
 
 nnoremap <silent> <Esc>i <ScriptCmd>is.SearchImage('normal')<CR>
-nnoremap <silent> <Esc>n <ScriptCmd>is.ShowNextImage()<CR>
 nnoremap <silent> <Esc>b <ScriptCmd>is.ShowPrevImage()<CR>
+nnoremap <silent> <Esc>n <ScriptCmd>is.ShowNextImage()<CR>
 nnoremap <silent> <Esc>j <ScriptCmd>is.ClearImage()<CR>
 
 xnoremap <silent> <Esc>i <ScriptCmd>is.SearchImage('visual')<CR>
