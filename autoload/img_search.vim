@@ -1,4 +1,5 @@
 vim9script
+scriptencoding utf-8
 
 const TMP_DIR = expand('~/.vim/img-search')
 const URL_FILE = TMP_DIR .. '/url.txt'
@@ -62,7 +63,7 @@ export def ClearImage()
         return
     endif
 
-    echoraw(printf("\x1b[%d;%dH\x1b[J", window.row, window.col))
+    printf("\x1b[%d;%dH\x1b[J", window.row, window.col)->echoraw()
     win_execute(window.id, 'close')
     redraw
 
@@ -106,7 +107,7 @@ def ShowImage()
     const winname = printf('%s (%d／%d)', urls->get(0, '')->trim(), imgidx, urls->len() - 1)
     window = OpenWindow(winname)
 
-    echoraw(printf("\x1b[%d;%dH%s", window.row, window.col, sixel))
+    printf("\x1b[%d;%dH%s", window.row, window.col, sixel)->echoraw()
 enddef
 
 def GetSelectedWord(): string

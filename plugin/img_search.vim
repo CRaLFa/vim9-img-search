@@ -4,6 +4,7 @@ if !has('vim9script')
 endif
 
 vim9script
+scriptencoding utf-8
 
 if exists('g:loaded_img_search')
     finish
