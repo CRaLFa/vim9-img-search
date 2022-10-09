@@ -6,6 +6,7 @@ const URL_FILE = TMP_DIR .. '/url.txt'
 const REG_TMP = '"'
 
 var window: dict<number>
+var imgcnt = 10
 var imgidx = 1
 
 export def SearchImage(mode: string)
@@ -30,7 +31,9 @@ export def SearchImage(mode: string)
     final urls = GetImageUrls(searchword)
     SaveUrlFile(searchword, urls)
 
+    imgcnt = urls->len() - 1
     imgidx = 1
+
     ShowImage()
 enddef
 
@@ -47,7 +50,7 @@ export def ShowPrevImage()
 enddef
 
 export def ShowNextImage()
-    if imgidx > 10
+    if imgcnt <= imgidx
         echo 'No image'
         return
     endif
@@ -104,7 +107,7 @@ def ShowImage()
         writefile([sixel], sixelfile)
     endif
 
-    const winname = printf('%s (%d／%d)', urls->get(0, '')->trim(), imgidx, urls->len() - 1)
+    const winname = printf('%s (%d／%d)', urls->get(0, '')->trim(), imgidx, imgcnt)
     window = OpenWindow(winname)
 
     printf("\x1b[%d;%dH%s", window.row, window.col, sixel)->echoraw()
